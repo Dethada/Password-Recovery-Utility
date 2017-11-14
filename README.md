@@ -4,11 +4,20 @@ Remember to link crypt library using `-lcrypt` when compiling.
 
 ## Cryptographic hash lookup generator
 
-* Increase efficency
-* Commandline input validation
+> Read Time: 118s
+>
+> MD5 Hash Time: 117s
+>
+> SHA512 Hash Time: 237s
+>
+> Execution Time: 238s (wordlist.txt)
+
+* Increase efficiency
+* Improve readability
+* Check if input file is a text file
 
 ##  Password Recovery Utility
 
-* Parse data into username:hash algo:salt:password ignore the rest for now
+* Parse data into username:password ignore the rest for now
 * Check if the format of the file is valid while parsing
 * Check if the password hash in shadow file is present in the lookup table generated

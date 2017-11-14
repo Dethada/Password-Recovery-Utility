@@ -16,59 +16,55 @@ struct LinkedList
 typedef struct LinkedList LinkedList;
 
 LinkedList *createNode(char *, int);
-LinkedList *appendNode(char *, int, LinkedList *);
-void printList(LinkedList *);
+void appendNode(char *, int, LinkedList *);
 LinkedList *readfile(char *, LinkedList *, int, int);
 void writefile(char *, LinkedList *);
+
+void printHelp(char *name) {
+	printf("Usage: %s <wordlist> <min> <max>\n\n", name);
+	printf("\t<wordlist> : A file path/name in which contains the password dictonary\n");
+	printf("\t<min> : An integer value greater than 1.\n\t\tThis value represents the minimum length of the password.\n");
+	printf("\t<max> : An integer value greater than or equals to <min>.\n\t\t<max> represents the maximum length of the password\n");
+}
 
 int main(int argc, char *argv[])
 {
 	if (argc != 4) {
-		printf("Usage: %s <wordlist> <min> <max>\n\n", argv[0]);
-		printf("\t<wordlist> : A file path/name in which contains the password dictonary\n");
-		printf("\t<min> : An integer value greater than 1.\n\t\tThis value represents the minimum length of the password.\n");
-		printf("\t<max> : An integer value greater than or equals to <min>.\n\t\t<max> represents the maximum length of the password\n");
+		printHelp(argv[0]);
 		return 1;
 	} else if (atoi(argv[2]) > atoi(argv[3])) {
-		printf("Usage: %s <wordlist> <min> <max>\n\n", argv[0]);
-		printf("\t<wordlist> : A file path/name in which contains the password dictonary\n");
-		printf("\t<min> : An integer value greater than 1.\n\t\tThis value represents the minimum length of the password.\n");
-		printf("\t<max> : An integer value greater than or equals to <min>.\n\t\t<max> represents the maximum length of the password\n");
+		printHelp(argv[0]);
 		return 1;
 	}
+
 	clock_t start = clock();
 	int min = atoi(argv[2]);
 	int max = atoi(argv[3]);
 	LinkedList *list = NULL;
+
+	time_t start2 = time(NULL);
 	list = readfile(argv[1], list, min, max);
+	printf("\nRead Time: %f\n", (double)(time(NULL) - start2));
 
 	if (list == NULL) {
 		return 1;
 	}
 
-    char * md5_scheme = "$1$$";	 // type 1 implies md5 (number of iteration is only 1000 rounds)
-    char * sha512_scheme = "$6$$";	 // type 2 implies sha-512 (default value as in yr 2017, number of iteration is minimum 10,000 rounds )
-	char * md5_digest;
-	char * sha512_digest;
+	char * md5_scheme = "$1$$";	 // type 1 implies md5 (number of iteration is only 1000 rounds)
+	char * sha512_scheme = "$6$$";	 // type 2 implies sha-512 (default value as in yr 2017, number of iteration is minimum 10,000 rounds )
 	LinkedList *tmp = list;
 
+	clock_t start3 = clock();
 	// Store hashes into linked list
-	while (tmp->nextNode != NULL) {
-		md5_digest = crypt(tmp->plaintext,md5_scheme); // MD5 Hash
-		sha512_digest = crypt(tmp->plaintext,sha512_scheme); // SHA-512 Hash
-
-		strcpy(tmp->md5, md5_digest);
-		strcpy(tmp->sha512, sha512_digest);
-		tmp = tmp->nextNode;
+	for (tmp = list->nextNode; tmp->nextNode != NULL; tmp = tmp->nextNode) {
+		strcpy(tmp->md5, crypt(tmp->plaintext,md5_scheme)); // MD5 Hash
+		strcpy(tmp->sha512, crypt(tmp->plaintext,sha512_scheme)); // SHA-512 Hash
 	}
-	md5_digest = crypt(tmp->plaintext,md5_scheme); // MD5 Hash
-	sha512_digest = crypt(tmp->plaintext,sha512_scheme); // SHA-512 Hash
-
-	strcpy(tmp->md5, md5_digest);
-	strcpy(tmp->sha512, sha512_digest);
-
-	// print hashes
-	printList(list);
+	strcpy(tmp->md5, crypt(tmp->plaintext,md5_scheme)); // MD5 Hash
+	strcpy(tmp->sha512, crypt(tmp->plaintext,sha512_scheme)); // SHA-512 Hash
+	clock_t end3 = clock();
+	double execTime3 = (double)(end3 - start3) / CLOCKS_PER_SEC;
+	printf("\nHash time: %lf\n", execTime3);
 
 	// write hashes to file
 	writefile("hashes.txt", list);
@@ -76,7 +72,7 @@ int main(int argc, char *argv[])
 	// Print execution time
 	clock_t end = clock();
 	double execTime = (double)(end - start) / CLOCKS_PER_SEC;
-	printf("\nExecution time: %lf\n", execTime);
+	printf("\nTotal Execution time: %lf\n", execTime);
 }
 
 LinkedList *createNode(char *plaintext, int length) {
@@ -92,7 +88,7 @@ LinkedList *createNode(char *plaintext, int length) {
 }
 
 // length is size of plaintext
-LinkedList *appendNode(char *plaintext, int length, LinkedList *head) {
+void appendNode(char *plaintext, int length, LinkedList *head) {
 	LinkedList *newNode = malloc(sizeof(LinkedList));
 	// Allocate memory for hash
 	newNode->md5 = malloc(MD5 * sizeof(char));
@@ -101,36 +97,18 @@ LinkedList *appendNode(char *plaintext, int length, LinkedList *head) {
 	strcpy(newNode->plaintext, plaintext);
 	newNode->nextNode = NULL;
 
-	if (head == NULL) {
-		return newNode;
-	} else {
-		LinkedList *tmp = head;
-
-		while (tmp->nextNode != NULL) {
-			tmp = tmp->nextNode;
-		}
-
-		tmp->nextNode = newNode;
-
-		return head;
-	}
-}
-
-void printList(LinkedList *head) {
 	LinkedList *tmp = head;
 
 	while (tmp->nextNode != NULL) {
-		printf("%s:%s\n", tmp->plaintext, tmp->md5);
-		printf("%s:%s\n", tmp->plaintext, tmp->sha512);
 		tmp = tmp->nextNode;
 	}
-	printf("%s:%s\n", tmp->plaintext, tmp->md5);
-	printf("%s:%s\n", tmp->plaintext, tmp->sha512);
+
+	tmp->nextNode = newNode;
 }
 
 void writefile(char *name, LinkedList *head) {
 	FILE *fp = fopen(name, "w");
-	LinkedList *tmp = head;
+	LinkedList *tmp = head->nextNode; // skip the starting node
 	while (tmp-> nextNode != NULL) {
 		fprintf(fp, "%s:%s\n%s:%s\n", tmp->plaintext, tmp->md5, tmp->plaintext, tmp->sha512);
 		tmp = tmp->nextNode;
@@ -142,30 +120,31 @@ void writefile(char *name, LinkedList *head) {
 LinkedList *readfile(char *name, LinkedList *list, int min, int max) {
 	// get file pointer
 	FILE *fp = fopen(name, "r");
-    char * line = NULL;
-    size_t len = 0;
-    int read;
-    unsigned long long count = 0; // number of words
+	char * line = NULL;
+	size_t len = 0;
+	int read;
+	unsigned long long count = 0; // number of words
 
-    // check if file exists
+	// check if file exists
 	if (fp == NULL) {
 		printf("Fatal error! %s is not found\n", name);
 		printf("Program halted. Please verify the file path and try again.\n");
 		return NULL;
 	}
-
+	list = createNode("start", 5) ; // create a starting node
 	// store each line into a linked list node
-    while ((read = (int) getline(&line, &len, fp)) != -1) {
-    	if (read < min || read > max) {
-    		continue;
-    	}
-        line[strcspn(line,"\n")] = 0; // strip new line
-        list = appendNode(line, read, list); // add new node to list
-        count++;
-    }
-    printf("Total number of words processed => %llu\n", count);
-    printf("Total number of generated entries => %llu\n", count * 2);
+	while ((read = (int) getline(&line, &len, fp)) != -1) {
+		if (read < min || read > max) {
+			continue;
+		}
+		line[strcspn(line,"\n")] = 0; // strip new line
+		appendNode(line, read, list); // add new node to list
+		count++;
+	}
+	printf("Total number of words processed => %llu\n", count);
+	printf("Total number of generated entries => %llu\n", count * 2);
 
+	free(line);
 	// close file
 	fclose(fp);
 
