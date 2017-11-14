@@ -18,22 +18,31 @@ typedef struct LinkedList LinkedList;
 LinkedList *createNode(char *, int);
 LinkedList *appendNode(char *, int, LinkedList *);
 void printList(LinkedList *);
-LinkedList *readfile(char *, LinkedList *);
-void writefile(char *, char *, unsigned long long);
+LinkedList *readfile(char *, LinkedList *, int, int);
+void writefile(char *, LinkedList *);
 
 int main(int argc, char *argv[])
 {
-	if (argc != 2) {
-		printf("Usage: %s <filename>\n", argv[0]);
+	if (argc != 4) {
+		printf("Usage: %s <wordlist> <min> <max>\n\n", argv[0]);
+		printf("\t<wordlist> : A file path/name in which contains the password dictonary\n");
+		printf("\t<min> : An integer value greater than 1.\n\t\tThis value represents the minimum length of the password.\n");
+		printf("\t<max> : An integer value greater than or equals to <min>.\n\t\t<max> represents the maximum length of the password\n");
+		return 1;
+	} else if (atoi(argv[2]) > atoi(argv[3])) {
+		printf("Usage: %s <wordlist> <min> <max>\n\n", argv[0]);
+		printf("\t<wordlist> : A file path/name in which contains the password dictonary\n");
+		printf("\t<min> : An integer value greater than 1.\n\t\tThis value represents the minimum length of the password.\n");
+		printf("\t<max> : An integer value greater than or equals to <min>.\n\t\t<max> represents the maximum length of the password\n");
 		return 1;
 	}
 	clock_t start = clock();
+	int min = atoi(argv[2]);
+	int max = atoi(argv[3]);
 	LinkedList *list = NULL;
-	list = readfile(argv[1], list);
+	list = readfile(argv[1], list, min, max);
 
 	if (list == NULL) {
-		printf("Fatal error! %s is not found\n", argv[1]);
-		printf("Program halted. Please verify the file path and try again.\n");
 		return 1;
 	}
 
@@ -60,6 +69,9 @@ int main(int argc, char *argv[])
 
 	// print hashes
 	printList(list);
+
+	// write hashes to file
+	writefile("hashes.txt", list);
 
 	// Print execution time
 	clock_t end = clock();
@@ -116,30 +128,43 @@ void printList(LinkedList *head) {
 	printf("%s:%s\n", tmp->plaintext, tmp->sha512);
 }
 
-void writefile(char *name, char *content, unsigned long long size) {
+void writefile(char *name, LinkedList *head) {
 	FILE *fp = fopen(name, "w");
-	fwrite(content, 1, size, fp);
+	LinkedList *tmp = head;
+	while (tmp-> nextNode != NULL) {
+		fprintf(fp, "%s:%s\n%s:%s\n", tmp->plaintext, tmp->md5, tmp->plaintext, tmp->sha512);
+		tmp = tmp->nextNode;
+	}
+	fprintf(fp, "%s:%s\n%s:%s\n", tmp->plaintext, tmp->md5, tmp->plaintext, tmp->sha512);
+	fclose(fp);
 }
 
-LinkedList *readfile(char *name, LinkedList *list) {
+LinkedList *readfile(char *name, LinkedList *list, int min, int max) {
 	// get file pointer
 	FILE *fp = fopen(name, "r");
     char * line = NULL;
     size_t len = 0;
     int read;
+    unsigned long long count = 0; // number of words
 
     // check if file exists
 	if (fp == NULL) {
-		fclose(fp);
+		printf("Fatal error! %s is not found\n", name);
+		printf("Program halted. Please verify the file path and try again.\n");
 		return NULL;
 	}
 
 	// store each line into a linked list node
     while ((read = (int) getline(&line, &len, fp)) != -1) {
+    	if (read < min || read > max) {
+    		continue;
+    	}
         line[strcspn(line,"\n")] = 0; // strip new line
         list = appendNode(line, read, list); // add new node to list
+        count++;
     }
-    printf("\n");
+    printf("Total number of words processed => %llu\n", count);
+    printf("Total number of generated entries => %llu\n", count * 2);
 
 	// close file
 	fclose(fp);

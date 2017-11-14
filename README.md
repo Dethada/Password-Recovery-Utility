@@ -4,9 +4,7 @@ Remember to link crypt library using `-lcrypt` when compiling.
 
 ## Cryptographic hash lookup generator
 
-* Write output to file
-* Enable minimum and maximum password length
-* Check if file exists
+Done
 
 ##  Password Recovery Utility
 
