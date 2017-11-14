@@ -5,23 +5,30 @@
 #define MAX_NAME 32
 #define SHA512 90
 
-struct LinkedList
-{
-	char *key;
+struct Lookup {
+	char *plaintext;
 	char *hash;
-	struct LinkedList *nextNode;
+	struct Lookup *nextNode;
 };
-typedef struct LinkedList LinkedList;
+struct User {
+	char *username;
+	char *hash;
+	char *password;
+	struct User *nextNode;
+};
+typedef struct Lookup Lookup;
+typedef struct User User;
 
-LinkedList *createNode();
-void appendNode(char *, char *, int, LinkedList *);
-void printList(LinkedList *);
-void readfile(char *, LinkedList *, int);
-void parseShadow(char *, LinkedList *);
-void parsePasswd(char *, LinkedList *);
+Lookup *createLookupNode();
+User *createUserNode();
+void appendLookupNode(char *, char *, int, Lookup *);
+void appendUserNode(char *, char *, int, User *);
+void readShadowFile(char *, User *);
+void readLookupFile(char *, Lookup *);
+void parseShadow(char *, User *);
+void parsePasswd(char *, Lookup *);
 
-int main(int argc, char const *argv[])
-{
+int main(int argc, char const *argv[]) {
 	if (argc != 3) {
 		printf("Usage: %s <shadowfile> <lookup>\n", argv[0]);
 		return 1;
@@ -32,31 +39,38 @@ int main(int argc, char const *argv[])
 	time ( &rawtime );
 	timeinfo = localtime ( &rawtime );
 	printf ( "Program started at: %s", asctime(timeinfo) );
-	LinkedList *lookupList = createNode(); // create starting node
-	LinkedList *shadowList = createNode(); // create starting node
-	readfile(argv[1], shadowList, 0); // read shadow file
-	readfile(argv[2], lookupList, 1); // read lookup file
-	printList(shadowList);
-	printf("-------------------------------\n");
-	printList(lookupList);
+	Lookup *lookupList = createLookupNode(); // create starting node
+	User *shadowList = createUserNode(); // create starting node
+	readShadowFile(argv[1], shadowList); // read shadow file
+	readLookupFile(argv[2], lookupList); // read lookup file
 
-	appendNode("end", "", 3, shadowList); // add ending node
-	appendNode("end", "", 3, lookupList); // add ending node
-	LinkedList *tmpCreds = shadowList;
-	LinkedList *tmpLookup = lookupList;
+	appendUserNode("end", "", 3, shadowList); // add ending node
+	appendLookupNode("end", "", 3, lookupList); // add ending node
+	User *tmpCreds;
+	Lookup *tmpLookup;
 
 	time_t start = time(NULL);
-	// Store hashes into linked list
-	for (tmpCreds = tmpCreds->nextNode; tmpCreds->nextNode != NULL; tmpCreds = tmpCreds->nextNode) {
-		for (tmpLookup = tmpLookup->nextNode; tmpLookup->nextNode != NULL; tmpLookup = tmpLookup->nextNode) {
+	// Check if password hash is in lookup table
+	for (tmpCreds = shadowList->nextNode; tmpCreds->nextNode != NULL; tmpCreds = tmpCreds->nextNode) {
+		for (tmpLookup = lookupList->nextNode; tmpLookup->nextNode != NULL; tmpLookup = tmpLookup->nextNode) {
 			if (strcmp(tmpCreds->hash, tmpLookup->hash) == 0) {
-				printf("user id : %s - password found => %s\n", tmpCreds->key, tmpLookup->key);
+				tmpCreds->password = malloc(strlen(tmpLookup->plaintext) * sizeof(char));
+				strcpy(tmpCreds->password, tmpLookup->plaintext);
 				break;
 			}
 		}
 		tmpLookup = lookupList;
 	}
 	printf("\nLookup Time: %f\n", (double)(time(NULL) - start));
+
+	// Print out passwords
+	for (tmpCreds = shadowList->nextNode; tmpCreds->nextNode != NULL; tmpCreds = tmpCreds->nextNode) {
+		if (tmpCreds->password != NULL) {
+			printf("user id : %s - password found => %s\n", tmpCreds->username, tmpCreds->password);
+		} else {
+			printf("user id : %s - password <NOT FOUND>\n", tmpCreds->username);
+		}
+	}
 
 	// Print time
 	time ( &rawtime );
@@ -65,23 +79,30 @@ int main(int argc, char const *argv[])
 	return 0;
 }
 
-LinkedList *createNode() {
-	LinkedList *newNode = malloc(sizeof(LinkedList));
+Lookup *createLookupNode() {
+	Lookup *newNode = malloc(sizeof(Lookup));
+	newNode->nextNode = NULL;
+
+	return newNode;
+}
+
+User *createUserNode() {
+	User *newNode = malloc(sizeof(User));
 	newNode->nextNode = NULL;
 
 	return newNode;
 }
 
 // length is size of key
-void appendNode(char *key, char *hash, int length, LinkedList *head) {
-	LinkedList *newNode = malloc(sizeof(LinkedList));
-	newNode->key = malloc(length * sizeof(char));
+void appendLookupNode(char *key, char *hash, int length, Lookup *head) {
+	Lookup *newNode = malloc(sizeof(Lookup));
+	newNode->plaintext = malloc(length * sizeof(char));
 	newNode->hash = malloc(SHA512 * sizeof(char));
-	strcpy(newNode->key, key);
+	strcpy(newNode->plaintext, key);
 	strcpy(newNode->hash, hash);
 	newNode->nextNode = NULL;
 
-	LinkedList *tmp = head;
+	Lookup *tmp = head;
 
 	while (tmp->nextNode != NULL) {
 		tmp = tmp->nextNode;
@@ -90,52 +111,58 @@ void appendNode(char *key, char *hash, int length, LinkedList *head) {
 	tmp->nextNode = newNode;
 }
 
-void printList(LinkedList *head) {
-	LinkedList *tmp = head->nextNode;
+void appendUserNode(char *username, char *hash, int length, User *head) {
+	User *newNode = malloc(sizeof(User));
+	newNode->username = malloc(length * sizeof(char));
+	newNode->hash = malloc(SHA512 * sizeof(char));
+	strcpy(newNode->username, username);
+	strcpy(newNode->hash, hash);
+	newNode->nextNode = NULL;
+
+	User *tmp = head;
 
 	while (tmp->nextNode != NULL) {
-		printf("%s:%s\n", tmp->key, tmp->hash);
 		tmp = tmp->nextNode;
 	}
-	printf("%s:%s\n", tmp->key, tmp->hash);
+
+	tmp->nextNode = newNode;
 }
 
 // should add some format checks
-void parsePasswd(char *string, LinkedList *list) {
+void parsePasswd(char *string, Lookup *list) {
 
 	// Do this if string passes format check
-	char *key;
+	char *plaintext;
 	char *hash;
 	char *token = strtok(string, ":");
-	key = malloc(strlen(token) * sizeof(char));
-	strcpy(key, token);
+	plaintext = malloc(strlen(token) * sizeof(char));
+	strcpy(plaintext, token);
 	token = strtok(NULL, ":");
 	hash = malloc(strlen(token) * sizeof(char));
 	strcpy(hash, token);
-	appendNode(key, hash, strlen(key), list);
+	appendLookupNode(plaintext, hash, strlen(plaintext), list);
 }
 
-void parseShadow(char *string, LinkedList *list) {
+void parseShadow(char *string, User *list) {
 	/*
 	if number of ':'s != 8 || number of '$'s != 3 print invalid entry
 	if '$$' not found print salt not supported or account disabled
 	*/
 
 	// Do this if the string passes format check
-	char *key;
+	char *username;
 	char *hash;
 	char *token = strtok(string, ":");
-	key = malloc(strlen(token) * sizeof(char));
-	strcpy(key, token);
+	username = malloc(strlen(token) * sizeof(char));
+	strcpy(username, token);
 	token = strtok(NULL, ":");
 	hash = malloc(strlen(token) * sizeof(char));
 	strcpy(hash, token);
-	appendNode(key, hash, strlen(key), list);
+	appendUserNode(username, hash, strlen(username), list);
 }
 
 // Reads each line of the file into a linked list
-// mode = 0 for shadow file mode, mode = 1 for lookup table mode
-void readfile(char *name, LinkedList *list, int mode) {
+void readShadowFile(char *name, User *list) {
 	time_t start = time(NULL);
 	FILE *fp = fopen(name, "r");	// get file pointer
 	char * line = NULL;
@@ -149,18 +176,36 @@ void readfile(char *name, LinkedList *list, int mode) {
 		exit(EXIT_FAILURE);
 	}
 
-	if (mode == 0) {
-		// store each line into a linked list node
-		while ((lineLength = (int) getline(&line, &len, fp)) != -1) {
-			line[strcspn(line,"\n")] = 0; // strip new line
-			parseShadow(line, list);
-		}
-	} else {
-		// store each line into a linked list node
-		while ((lineLength = (int) getline(&line, &len, fp)) != -1) {
-			line[strcspn(line,"\n")] = 0; // strip new line
-			parsePasswd(line, list);
-		}
+	// store each line into a linked list node
+	while ((lineLength = (int) getline(&line, &len, fp)) != -1) {
+		line[strcspn(line,"\n")] = 0; // strip new line
+		parseShadow(line, list);
+	}
+
+	free(line);
+	// close file
+	fclose(fp);
+	printf("\nRead Time: %f\n", (double)(time(NULL) - start));
+}
+
+void readLookupFile(char *name, Lookup *list) {
+	time_t start = time(NULL);
+	FILE *fp = fopen(name, "r");	// get file pointer
+	char * line = NULL;
+	size_t len = 0;
+	int lineLength;
+
+	// check if file exists
+	if (fp == NULL) {
+		printf("Fatal error! %s is not found\n", name);
+		printf("Program halted. Please verify the file path and try again.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	// store each line into a linked list node
+	while ((lineLength = (int) getline(&line, &len, fp)) != -1) {
+		line[strcspn(line,"\n")] = 0; // strip new line
+		parsePasswd(line, list);
 	}
 
 	free(line);
