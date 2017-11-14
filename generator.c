@@ -32,7 +32,8 @@ int main(int argc, char *argv[])
 	list = readfile(argv[1], list);
 
 	if (list == NULL) {
-		printf("Fatal error! file is not found\n");
+		printf("Fatal error! %s is not found\n", argv[1]);
+		printf("Program halted. Please verify the file path and try again.\n");
 		return 1;
 	}
 

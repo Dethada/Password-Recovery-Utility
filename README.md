@@ -4,8 +4,9 @@ Remember to link crypt library using `-lcrypt` when compiling.
 
 ## Cryptographic hash lookup generator
 
-* Use linked-list
-* Generate sha512 and md5 hashes from wordlist
+* Write output to file
+* Enable minimum and maximum password length
+* Check if file exists
 
 ##  Password Recovery Utility
 
