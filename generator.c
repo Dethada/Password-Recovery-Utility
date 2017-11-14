@@ -8,43 +8,57 @@
 
 struct LinkedList
 {
-	char *hash;
+	char *md5;
+	char *sha512;
 	char *plaintext;
 	struct LinkedList *nextNode;
 };
 typedef struct LinkedList LinkedList;
 
-LinkedList *createNode(char *, char *, int, int);
-LinkedList *appendNode(char *, char *, int, int, LinkedList *);
+LinkedList *createNode(char *, int);
+LinkedList *appendNode(char *, int, LinkedList *);
 void printList(LinkedList *);
-void readfile(char *);
+LinkedList *readfile(char *, LinkedList *);
+void writefile(char *, char *, unsigned long long);
 
-int main(void)
+int main(int argc, char *argv[])
 {
+	if (argc != 2) {
+		printf("Usage: %s <filename>\n", argv[0]);
+		return 1;
+	}
 	clock_t start = clock();
-	LinkedList *md5List = NULL;
-	LinkedList *sha512List = NULL;
+	LinkedList *list = NULL;
+	list = readfile(argv[1], list);
 
-	readfile("small_wordlist.txt");
-
-	char * plaintext[] = {"ilovepython&c", "abc", "edasdf"} ;
-    char * encyption_scheme1 = "$1$$";	 // type 1 implies md5 (number of iteration is only 1000 rounds)
-    char * encyption_scheme2 = "$6$$";	 // type 2 implies sha-512 (default value as in yr 2017, number of iteration is minimum 10,000 rounds )
-	char * result;
-
-	// Store hashes into linked list
-	for (int i=0; i < 3; i++) {
-		result = crypt(plaintext[i],encyption_scheme1); // MD5 Hash
-		md5List = appendNode(result, plaintext[i], strlen(plaintext[i]), MD5, md5List);
-
-		result = crypt(plaintext[i],encyption_scheme2); // SHA-512 Hash
-		sha512List = appendNode(result, plaintext[i], strlen(plaintext[i]), SHA512, sha512List);
+	if (list == NULL) {
+		printf("Fatal error! file is not found\n");
+		return 1;
 	}
 
+    char * md5_scheme = "$1$$";	 // type 1 implies md5 (number of iteration is only 1000 rounds)
+    char * sha512_scheme = "$6$$";	 // type 2 implies sha-512 (default value as in yr 2017, number of iteration is minimum 10,000 rounds )
+	char * md5_digest;
+	char * sha512_digest;
+	LinkedList *tmp = list;
+
+	// Store hashes into linked list
+	while (tmp->nextNode != NULL) {
+		md5_digest = crypt(tmp->plaintext,md5_scheme); // MD5 Hash
+		sha512_digest = crypt(tmp->plaintext,sha512_scheme); // SHA-512 Hash
+
+		strcpy(tmp->md5, md5_digest);
+		strcpy(tmp->sha512, sha512_digest);
+		tmp = tmp->nextNode;
+	}
+	md5_digest = crypt(tmp->plaintext,md5_scheme); // MD5 Hash
+	sha512_digest = crypt(tmp->plaintext,sha512_scheme); // SHA-512 Hash
+
+	strcpy(tmp->md5, md5_digest);
+	strcpy(tmp->sha512, sha512_digest);
+
 	// print hashes
-	printList(md5List);
-	printf("\n\n");
-	printList(sha512List);
+	printList(list);
 
 	// Print execution time
 	clock_t end = clock();
@@ -52,11 +66,11 @@ int main(void)
 	printf("\nExecution time: %lf\n", execTime);
 }
 
-LinkedList *createNode(char * hash, char *plaintext, int length, int size) {
-
+LinkedList *createNode(char *plaintext, int length) {
 	LinkedList *newNode = malloc(sizeof(LinkedList));
-	newNode->hash = malloc(size * sizeof(char));
-	strcpy(newNode->hash, hash);
+	// Allocate memory for hash
+	newNode->md5 = malloc(MD5 * sizeof(char));
+	newNode->sha512 = malloc(SHA512 * sizeof(char));
 	newNode->plaintext = malloc(length * sizeof(char));
 	strcpy(newNode->plaintext, plaintext);
 	newNode->nextNode = NULL;
@@ -64,10 +78,12 @@ LinkedList *createNode(char * hash, char *plaintext, int length, int size) {
 	return newNode;
 }
 
-LinkedList *appendNode(char *hash, char *plaintext, int length, int size, LinkedList *head) {
+// length is size of plaintext
+LinkedList *appendNode(char *plaintext, int length, LinkedList *head) {
 	LinkedList *newNode = malloc(sizeof(LinkedList));
-	newNode->hash = malloc(size * sizeof(char));
-	strcpy(newNode->hash, hash);
+	// Allocate memory for hash
+	newNode->md5 = malloc(MD5 * sizeof(char));
+	newNode->sha512 = malloc(SHA512 * sizeof(char));
 	newNode->plaintext = malloc(length * sizeof(char));
 	strcpy(newNode->plaintext, plaintext);
 	newNode->nextNode = NULL;
@@ -91,33 +107,41 @@ void printList(LinkedList *head) {
 	LinkedList *tmp = head;
 
 	while (tmp->nextNode != NULL) {
-		printf("%s:%s\n", tmp->plaintext, tmp->hash);
+		printf("%s:%s\n", tmp->plaintext, tmp->md5);
+		printf("%s:%s\n", tmp->plaintext, tmp->sha512);
 		tmp = tmp->nextNode;
 	}
-	printf("%s:%s\n", tmp->plaintext, tmp->hash);
+	printf("%s:%s\n", tmp->plaintext, tmp->md5);
+	printf("%s:%s\n", tmp->plaintext, tmp->sha512);
 }
 
+void writefile(char *name, char *content, unsigned long long size) {
+	FILE *fp = fopen(name, "w");
+	fwrite(content, 1, size, fp);
+}
 
-void readfile(char *name) {
+LinkedList *readfile(char *name, LinkedList *list) {
 	// get file pointer
 	FILE *fp = fopen(name, "r");
     char * line = NULL;
     size_t len = 0;
     int read;
 
+    // check if file exists
 	if (fp == NULL) {
-		printf("Fatal error! %s is not found\n", name);
 		fclose(fp);
-		return;
+		return NULL;
 	}
 
 	// store each line into a linked list node
     while ((read = (int) getline(&line, &len, fp)) != -1) {
-        printf("Retrieved line of length %d :\n", read);
-        printf("%s", line);
+        line[strcspn(line,"\n")] = 0; // strip new line
+        list = appendNode(line, read, list); // add new node to list
     }
     printf("\n");
 
 	// close file
 	fclose(fp);
+
+	return list;
 }
