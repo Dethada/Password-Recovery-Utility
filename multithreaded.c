@@ -91,7 +91,9 @@ int main(int argc, char *argv[]) {
 	// Print time
 	time ( &rawtime );
 	timeinfo = localtime ( &rawtime );
-	printf ( "Program ended at: %s", asctime (timeinfo) );
+	printf ( "Program ended at: %s\n", asctime (timeinfo) );
+
+	return 0;
 }
 
 // returns 1 when invalid, 0 when valid
