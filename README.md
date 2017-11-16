@@ -9,7 +9,7 @@ Remember to link crypt library and openmp using `-lcrypt` and `-fopenmp` when co
 * Add option to choose number of threads to use
 * Use unsigned long long for count variable
 * Improve readability
-* check if system has file command
+* if system do not have file command check for txt extension
 
 ##  Password Recovery Utility
 
