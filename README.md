@@ -1,6 +1,6 @@
 # C Assignment
 
-Remember to link crypt library using `-lcrypt` when compiling.
+Remember to link crypt library and openmp using `-lcrypt` and `-fopenmp` when compiling.
 
 ## Cryptographic hash lookup generator
 
