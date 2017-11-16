@@ -88,6 +88,11 @@ void is_valid_file(char *name) {
 	strcpy(cmd, "/usr/bin/file ");
 	strcat(cmd, name);
 	FILE *pipe = popen(cmd, "r"); // use file command to check if file is ascii text file
+	if (fp == NULL) {
+		printf("Failed to run command \"file\"\n");
+		printf("Program halted. Please ensure you have the program \"file\" installed and try again.\n");
+		exit(EXIT_FAILURE);
+	}
 
 	fgets(result, sizeof(result)-1, pipe);
 	if (strstr(result, "ASCII text") == NULL) {
@@ -104,7 +109,7 @@ void is_valid_file(char *name) {
 /* Prints out help menu */
 void printHelp(char *name) {
 	printf("Usage: %s <wordlist> <min> <max>\n\n", name);
-	printf("\t<wordlist> : A file path/name in which contains the password dictonary\n");
+	printf("\t<wordlist> : A file path/name in which contains the password dictonary (A text file)\n");
 	printf("\t<min> : An integer value greater than 1.\n\t\tThis value represents the minimum length of the password.\n");
 	printf("\t<max> : An integer value greater than or equals to <min>.\n\t\t<max> represents the maximum length of the password\n");
 }
