@@ -4,17 +4,12 @@ Remember to link crypt library using `-lcrypt` when compiling.
 
 ## Cryptographic hash lookup generator
 
-> Read Time: 118s
->
-> MD5 Hash Time: 117s
->
-> SHA512 Hash Time: 237s
->
-> Execution Time: 238s (wordlist.txt)
+> Execution Time using 8 threads: 48s (wordlist.txt)
 
-* Increase efficiency
+* Add option to choose number of threads to use
+* Use unsigned long long for count variable
 * Improve readability
-* Check if input file is a text file
+* Check if input file is a text file (check for .txt extension)
 
 ##  Password Recovery Utility
 
@@ -25,3 +20,4 @@ Remember to link crypt library using `-lcrypt` when compiling.
 * Display invalid entries
 * Check if the password hash in shadow file is present in the lookup table generated
 * Improve efficiency by only check for the correct hashing algorithm
+

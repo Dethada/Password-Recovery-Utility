@@ -134,9 +134,7 @@ LinkedList *readfile(char *name, LinkedList *list, int min, int max) {
 	list = createNode("start", 5) ; // create a starting node
 	// store each line into a linked list node
 	while ((read = (int) getline(&line, &len, fp)) != -1) {
-		if (read < min || read > max) {
-			continue;
-		}
+		if (read < min || read > max)	continue;
 		line[strcspn(line,"\n")] = 0; // strip new line
 		appendNode(line, read, list); // add new node to list
 		count++;
