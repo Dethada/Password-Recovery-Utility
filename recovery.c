@@ -36,21 +36,16 @@ int main(int argc, char *argv[]) {
 	timeinfo = localtime ( &rawtime );
 	printf ( "Program started at: %s", asctime(timeinfo) );
 
-	unsigned long long shadowLength = countLines(argv[1]); // get number of lines in shadow file
-	unsigned long long lookupLength = countLines(argv[2]) / 2; // get number of lines in lookup file
+	unsigned long long shadowLength = countLines(argv[1]); 		// get number of lines in shadow file
+	unsigned long long lookupLength = countLines(argv[2]) / 2; 	// get number of lines in lookup file
 
-	Lookup lookup[lookupLength];
-	User user[shadowLength];
+	Lookup lookup[lookupLength];	// create lookup array
+	User user[shadowLength];		// create user array
 
 	printf("shadow: %llu\nlookup: %llu\n", shadowLength, lookupLength);
 
-	readShadowFile(argv[1], user);
-	readLookupFile(argv[2], lookup);
-
-	// printf("\n\n");
-	// for (int i = 0; i < 4; i++) {
-	// 	printf("%s:%s\n", lookup[i].plaintext, lookup[i].md5);
-	// }
+	readShadowFile(argv[1], user);	// read shadow file into memory
+	readLookupFile(argv[2], lookup);// read lookup file into memory
 
 	/* search for the password */
 	for (int i = 0; i < shadowLength; i++) {
@@ -72,6 +67,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	/* Print out results */
 	for (int i = 0; i < shadowLength; i++) {
 		if (user[i].password != NULL) {
 			printf("user id : %s - password found => %s\n", user[i].username, user[i].password);
@@ -130,7 +126,7 @@ unsigned long long countLines(char *name) {
 	return count;
 }
 
-// Reads each line of the file into a array
+/* Reads each line of the file into a array */
 void readShadowFile(char *name, User *array) {
 	FILE *fp = fopen(name, "r");	// get file pointer
 	char * line = NULL;
@@ -156,9 +152,7 @@ void readShadowFile(char *name, User *array) {
 	fclose(fp);
 }
 
-/*
-Read all hashes into an array
-*/
+/* Read all hashes into an array */
 void readLookupFile(char *name, Lookup *array) {
 	FILE *fp = fopen(name, "r");	// get file pointer
 	char * line = NULL;
