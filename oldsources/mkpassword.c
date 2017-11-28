@@ -11,7 +11,7 @@ To compile: need to include -lcrypt option.
 e.g. cc -o mkpassword mkpassword.c -lcrypt
 
 */
-int main(void)
+int main(int argc, char *argv[])
 {
 /* 
 		 
@@ -22,8 +22,7 @@ int main(void)
 			
  
 */
-	char * plaintext = "ilovepython&c" ;
-   
+    char *plaintext = "fun\n";
     char * hash_type_1 = "$1$";	 // type 1 implies md5 (number of iteration is only 1000 rounds)
     char * hash_type_2 = "$6$";	 // type 2 implies sha-512 (default value as in yr 2017, number of iteration is minimum 10,000 rounds )
 	char * salt_1 ="$";			  // a simplified 0 length salt.
@@ -41,7 +40,7 @@ int main(void)
 	// prepare the second call using sha-512 and a 8-char salt
 	strcpy(encyption_scheme,hash_type_2);
 	strcat(encyption_scheme,salt_2);
-	result = crypt(plaintext,encyption_scheme);
+	result = crypt(argv[1],encyption_scheme);
 	printf("The return from the 2nd call of crypt() contains the sha-512 HashID,Salt,encrypted String\n");
 	printf("%s\n",result);
 	 

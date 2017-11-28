@@ -131,11 +131,12 @@ int countLines(char *name, int min, int max) {
 	FILE *fp = fopen(name, "r");
 	char * line = NULL;
 	size_t len = 0;
-	int lineLength;
 	int count = 0;
 
-	while ((lineLength = (int) getline(&line, &len, fp)) != -1) {
-		if (lineLength < min || lineLength > max)	continue;
+	while ((getline(&line, &len, fp)) != -1) {
+		line[strcspn(line,"\n")] = 0; // strip new line
+		int length = strlen(line);
+		if (length < min || length > max)	continue;
 		count++;
 	}
 
@@ -154,13 +155,13 @@ void readfile(char *name, Hash *array, int min, int max) {
 	FILE *fp = fopen(name, "r");	// get file pointer
 	char * line = NULL;
 	size_t len = 0;
-	int lineLength;
 	int i = 0;
 
 	/* store each line into the array */
-	while ((lineLength = (int) getline(&line, &len, fp)) != -1) {
-		if (lineLength < min || lineLength > max)	continue;
+	while ((getline(&line, &len, fp)) != -1) {
 		line[strcspn(line,"\n")] = 0; // strip new line
+		int length = strlen(line);
+		if (length < min || length > max)	continue;
 		array[i].plaintext = strdup(line);
 		i++;
 	}
