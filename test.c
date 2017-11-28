@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#define MAX_NAME 32
-#define SHA512 90
 
 struct Lookup {
 	char *plaintext;
@@ -21,9 +19,12 @@ typedef struct User User;
 void readShadowFile(char *, User *);
 void readLookupFile(char *, Lookup *);
 void parseShadow(char *, User *);
-void parsePasswd(char *, Lookup *);
+void parsePasswd(char *, char *, Lookup *);
+unsigned long long countLines(char *);
 
-int main(int argc, char const *argv[]) {
+/* 	argv[1] is shadow file
+	argv[2] is lookup file*/
+int main(int argc, char *argv[]) {
 	if (argc != 3) {
 		printf("Usage: %s <shadowfile> <lookup>\n", argv[0]);
 		return 1;
@@ -35,29 +36,47 @@ int main(int argc, char const *argv[]) {
 	timeinfo = localtime ( &rawtime );
 	printf ( "Program started at: %s", asctime(timeinfo) );
 
-	readShadowFile(argv[1], shadowList); // read shadow file
-	readLookupFile(argv[2], lookupList); // read lookup file
+	unsigned long long shadowLength = countLines(argv[1]); // get number of lines in shadow file
+	unsigned long long lookupLength = countLines(argv[2]) / 2; // get number of lines in lookup file
 
-	time_t start = time(NULL);
-	// Check if password hash is in lookup table
-	for (tmpCreds = shadowList->nextNode; tmpCreds->nextNode != NULL; tmpCreds = tmpCreds->nextNode) {
-		for (tmpLookup = lookupList->nextNode; tmpLookup->nextNode != NULL; tmpLookup = tmpLookup->nextNode) {
-			if (strcmp(tmpCreds->hash, tmpLookup->hash) == 0) {
-				tmpCreds->password = malloc(strlen(tmpLookup->plaintext) * sizeof(char));
-				strcpy(tmpCreds->password, tmpLookup->plaintext);
-				break;
+	Lookup lookup[lookupLength];
+	User user[shadowLength];
+
+	printf("shadow: %llu\nlookup: %llu\n", shadowLength, lookupLength);
+
+	readShadowFile(argv[1], user);
+	readLookupFile(argv[2], lookup);
+
+	// printf("\n\n");
+	// for (int i = 0; i < 4; i++) {
+	// 	printf("%s:%s\n", lookup[i].plaintext, lookup[i].md5);
+	// }
+
+	/* search for the password */
+	for (int i = 0; i < shadowLength; i++) {
+		user[i].password = NULL;
+		if (user[i].hash[1] == '1') { // if hash is md5
+			for (int j = 0; j < lookupLength; j++) {
+				if (strcmp(lookup[j].md5, user[i].hash) == 0) {
+					user[i].password = strdup(lookup[j].plaintext);
+					break;
+				}
+			}
+		} else { // if hash is sha512
+			for (int j = 0; j < lookupLength; j++) {
+				if (strcmp(lookup[j].sha512, user[i].hash) == 0) {
+					user[i].password = strdup(lookup[j].plaintext);
+					break;
+				}
 			}
 		}
-		tmpLookup = lookupList;
 	}
-	printf("\nLookup Time: %f\n", (double)(time(NULL) - start));
 
-	// Print out passwords
-	for (tmpCreds = shadowList->nextNode; tmpCreds->nextNode != NULL; tmpCreds = tmpCreds->nextNode) {
-		if (tmpCreds->password != NULL) {
-			printf("user id : %s - password found => %s\n", tmpCreds->username, tmpCreds->password);
+	for (int i = 0; i < shadowLength; i++) {
+		if (user[i].password != NULL) {
+			printf("user id : %s - password found => %s\n", user[i].username, user[i].password);
 		} else {
-			printf("user id : %s - password <NOT FOUND>\n", tmpCreds->username);
+			printf("user id : %s - password <NOT FOUND>\n", user[i].username);
 		}
 	}
 
@@ -68,45 +87,55 @@ int main(int argc, char const *argv[]) {
 	return 0;
 }
 
-// should add some format checks
-void parsePasswd(char *string, Lookup *list) {
+/* should add some format checks */
+void parsePasswd(char *md5, char *sha512, Lookup *lookup) {
+	/* check if line has both plaintext and hash */
+
 
 	// Do this if string passes format check
-	char *plaintext;
-	char *hash;
-	char *token = strtok(string, ":");
-	plaintext = malloc(strlen(token) * sizeof(char));
-	strcpy(plaintext, token);
+	char *token = strtok(md5, ":");
+	lookup->plaintext = strdup(token);
 	token = strtok(NULL, ":");
-	hash = malloc(strlen(token) * sizeof(char));
-	strcpy(hash, token);
+	lookup->md5 = strdup(token);
+	token = strtok(sha512, ":");
+	token = strtok(NULL, ":");
+	lookup->sha512 = strdup(token);
 }
 
-void parseShadow(char *string, User *list) {
+void parseShadow(char *string, User *user) {
 	/*
 	Pass in the array of hashes, return a populated array of Lookup
 	if number of ':'s != 8 || number of '$'s != 3 print invalid entry
+	1 or 6 is not found after first $
 	if '$$' not found print salt not supported or account disabled
 	*/
 
 	// Do this if the string passes format check
-	char *username;
-	char *hash;
 	char *token = strtok(string, ":");
-	username = malloc(strlen(token) * sizeof(char));
-	strcpy(username, token);
+	user->username = strdup(token);
 	token = strtok(NULL, ":");
-	hash = malloc(strlen(token) * sizeof(char));
-	strcpy(hash, token);
+	user->hash = strdup(token);
+}
+
+unsigned long long countLines(char *name) {
+	FILE *fp = fopen(name, "r");
+	char * line = NULL;
+	size_t len = 0;
+	unsigned long long count = 0;
+
+	while ((getline(&line, &len, fp)) != -1) {
+		count++;
+	}
+
+	return count;
 }
 
 // Reads each line of the file into a array
 void readShadowFile(char *name, User *array) {
-	time_t start = time(NULL);
 	FILE *fp = fopen(name, "r");	// get file pointer
 	char * line = NULL;
 	size_t len = 0;
-	int lineLength;
+	unsigned long long i = 0;
 
 	// check if file exists
 	if (fp == NULL) {
@@ -116,26 +145,26 @@ void readShadowFile(char *name, User *array) {
 	}
 
 	// store each line into a linked list node
-	while ((lineLength = (int) getline(&line, &len, fp)) != -1) {
+	while ((getline(&line, &len, fp)) != -1) {
 		line[strcspn(line,"\n")] = 0; // strip new line
-		parseShadow(line, list);
+		parseShadow(line, &array[i]);
+		i++;
 	}
 
 	free(line);
 	// close file
 	fclose(fp);
-	printf("\nRead Time: %f\n", (double)(time(NULL) - start));
 }
 
 /*
 Read all hashes into an array
 */
 void readLookupFile(char *name, Lookup *array) {
-	time_t start = time(NULL);
 	FILE *fp = fopen(name, "r");	// get file pointer
 	char * line = NULL;
 	size_t len = 0;
-	int lineLength;
+	unsigned long long i = 0, count = 0;
+	char *prev, *current;
 
 	// check if file exists
 	if (fp == NULL) {
@@ -145,12 +174,18 @@ void readLookupFile(char *name, Lookup *array) {
 	}
 
 	// store each line into a linked list node
-	while ((lineLength = (int) getline(&line, &len, fp)) != -1) {
+	while ((getline(&line, &len, fp)) != -1) {
 		line[strcspn(line,"\n")] = 0; // strip new line
+		current = strdup(line);
+		if (count % 2 != 0) {
+			parsePasswd(prev, current, &array[i]);
+			i++;
+		}
+		prev = strdup(current);
+		count++;
 	}
 
 	free(line);
 	// close file
 	fclose(fp);
-	printf("\nRead Time: %f\n", (double)(time(NULL) - start));
 }

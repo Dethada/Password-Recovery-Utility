@@ -15,10 +15,10 @@ Remember to link crypt library and openmp using `-lcrypt` and `-fopenmp` when co
 
 ##  Password Recovery Utility
 ![](images/task2.png) 
-> Runtime: 804s
+> Runtime: less than 1 second
 
-* Parse data into username and password
+* ~~Parse data into username and password~~
 * Check if the format of the file is valid while parsing
 * Display invalid entries
-* Improve efficiency by only check for the correct hashing algorithm
+* ~~Improve efficiency by only check for the correct hashing algorithm~~
 * Add multithreading
