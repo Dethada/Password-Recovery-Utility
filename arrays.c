@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 	} else if (isNotValid(argv[2]) || isNotValid(argv[3])) {
 		printHelp(argv[0]);
 		return 1;
-	} else if (atoi(argv[2]) > atoi(argv[3])) {
+	} else if (atoi(argv[2]) > atoi(argv[3]) || atoi(argv[2]) < 1) {
 		printHelp(argv[0]);
 		return 1;
 	}
@@ -52,8 +52,10 @@ int main(int argc, char *argv[]) {
 	omp_set_num_threads(nProcessors); // set number of threads to max avaliable
 	#pragma omp parallel for
 	for (int i = 0; i < count; i++) {
-		hashes[i].md5 = strdup(crypt(hashes[i].plaintext, "$1$$")); // MD5 Hash
-		hashes[i].sha512 = strdup(crypt(hashes[i].plaintext, "$6$$")); // SHA-512 Hash
+		struct crypt_data data; // storage space for crypt_r
+		data.initialized = 0;
+		hashes[i].md5 = strdup(crypt_r(hashes[i].plaintext, "$1$$", &data)); // MD5 Hash
+		hashes[i].sha512 = strdup(crypt_r(hashes[i].plaintext, "$6$$", &data)); // SHA-512 Hash
 	}
 
 	writefile("hashes.txt", hashes, count); // write hashes out to disk
@@ -112,7 +114,7 @@ void is_valid_file(char *name) {
 void printHelp(char *name) {
 	printf("Usage: %s <wordlist> <min> <max>\n\n", name);
 	printf("\t<wordlist> : A file path/name in which contains the password dictonary\n");
-	printf("\t<min> : An integer value greater than 1.\n\t\tThis value represents the minimum length of the password.\n");
+	printf("\t<min> : An integer value greater than 0.\n\t\tThis value represents the minimum length of the password.\n");
 	printf("\t<max> : An integer value greater than or equals to <min>.\n\t\t<max> represents the maximum length of the password\n");
 }
 
