@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <crypt.h>
@@ -88,10 +89,11 @@ void is_valid_file(char *name) {
 	strcpy(cmd, "/usr/bin/file ");
 	strcat(cmd, name);
 	FILE *pipe = popen(cmd, "r"); // use file command to check if file is ascii text file
-	if (pipe == NULL) {
-		printf("Failed to run command \"file\"\n");
-		printf("Program halted. Please ensure you have the program \"file\" installed and try again.\n");
-		exit(EXIT_FAILURE);
+	if (pipe == NULL) { // check for file extension if file command does not exist
+		if (strcasestr(name, ".txt") == NULL) {
+			printf("Program halted. Please ensure the input file is a txt file\n");
+			exit(EXIT_FAILURE);
+		}
 	}
 
 	fgets(result, sizeof(result)-1, pipe);
