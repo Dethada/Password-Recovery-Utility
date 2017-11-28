@@ -17,7 +17,7 @@ typedef struct Hash Hash;
 void printHelp(char *);
 int isNotValid(char *);
 void readfile(char *, Hash *, int, int);
-int countLines(char *, int, int);
+unsigned long long countLines(char *, int, int);
 void writefile(char *, Hash *, int);
 void is_valid_file(char *);
 
@@ -43,10 +43,10 @@ int main(int argc, char *argv[]) {
 
 	int min = atoi(argv[2]);
 	int max = atoi(argv[3]);
-	int count = countLines(argv[1], min, max); // get number of lines
+	unsigned long long count = countLines(argv[1], min, max); // get number of lines
 	Hash hashes[count];
 	readfile(argv[1], hashes, min, max);
-	printf("Total number of words processed => %d\n", count);
+	printf("Total number of words processed => %llu\n", count);
 
 	int nProcessors = omp_get_max_threads(); // get number of threads avaliable
 	omp_set_num_threads(nProcessors); // set number of threads to max avaliable
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 
 	writefile("hashes.txt", hashes, count); // write hashes out to disk
 
-	printf("Total number of generated entries => %d\n", count << 1);
+	printf("Total number of generated entries => %llu\n", count << 1);
 
 	/* Print program end time */
 	time ( &rawtime );
@@ -129,11 +129,11 @@ int isNotValid(char *arg) {
 	return 0;
 }
 
-int countLines(char *name, int min, int max) {
+unsigned long long countLines(char *name, int min, int max) {
 	FILE *fp = fopen(name, "r");
 	char * line = NULL;
 	size_t len = 0;
-	int count = 0;
+	unsigned long long count = 0;
 
 	while ((getline(&line, &len, fp)) != -1) {
 		line[strcspn(line,"\n")] = 0; // strip new line

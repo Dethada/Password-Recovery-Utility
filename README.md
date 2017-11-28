@@ -7,17 +7,18 @@ Remember to link crypt library and openmp using `-lcrypt` and `-fopenmp` when co
 > Execution Time using 8 threads: 48s (wordlist.txt)
 
 * Add option to choose number of threads to use
-* Use unsigned long long for count variable
+* Add option for output path
 * Improve readability
-* if system do not have file command check for txt extension
+* ~~Add multithreading~~
+* ~~Use file command to validate input file is a text file~~
+* ~~ if system do not have file command check for txt extension~~
 
 ##  Password Recovery Utility
 
 > Runtime: 804s
 
-* Parse data into username:password ignore the rest for now
+* Parse data into username and password
 * Check if the format of the file is valid while parsing
 * Display invalid entries
-* Check if the password hash in shadow file is present in the lookup table generated
 * Improve efficiency by only check for the correct hashing algorithm
-
+* Add multithreading
