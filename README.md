@@ -3,7 +3,7 @@
 Remember to link crypt library and openmp using `-lcrypt` and `-fopenmp` when compiling.
 
 ## Cryptographic hash lookup generator
-
+![](images/task1.png) 
 > Execution Time using 8 threads: 48s (wordlist.txt)
 
 * Add option to choose number of threads to use
@@ -11,10 +11,10 @@ Remember to link crypt library and openmp using `-lcrypt` and `-fopenmp` when co
 * Improve readability
 * ~~Add multithreading~~
 * ~~Use file command to validate input file is a text file~~
-* ~~ if system do not have file command check for txt extension~~
+* ~~if system do not have file command check for txt extension~~
 
 ##  Password Recovery Utility
-
+![](images/task2.png) 
 > Runtime: 804s
 
 * Parse data into username and password
