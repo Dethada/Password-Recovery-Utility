@@ -16,10 +16,10 @@ typedef struct Hash Hash;
 
 void printHelp(char *);
 int isNotValid(char *);
+void is_valid_file(char *);
+void writefile(char *, Hash *, int);
 void readfile(char *, Hash *, int, int);
 unsigned long long countLines(char *, int, int);
-void writefile(char *, Hash *, int);
-void is_valid_file(char *);
 
 int main(int argc, char *argv[]) {
 	if (argc != 4) {
@@ -38,8 +38,9 @@ int main(int argc, char *argv[]) {
 	time_t rawtime;
 	struct tm * timeinfo;
 	time (&rawtime);
-	timeinfo = localtime (&rawtime);
-	printf("Program started at: %s", asctime (timeinfo));
+	timeinfo = localtime(&rawtime);
+	printf("Program started at: %s", asctime(timeinfo));
+	clock_t begin = clock();
 
 	int min = atoi(argv[2]);
 	int max = atoi(argv[3]);
@@ -58,14 +59,17 @@ int main(int argc, char *argv[]) {
 		hashes[i].sha512 = strdup(crypt_r(hashes[i].plaintext, "$6$$", &data)); // SHA-512 Hash
 	}
 
-	writefile("hashes.txt", hashes, count); // write hashes out to disk
+	clock_t end = clock();
+	double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
 
+	writefile("mytab2411.txt", hashes, count); // write hashes out to disk
 	printf("Total number of generated entries => %llu\n", count << 1);
 
 	/* Print program end time */
-	time ( &rawtime );
-	timeinfo = localtime ( &rawtime );
-	printf ( "Program ended at: %s", asctime (timeinfo));
+	time(&rawtime);
+	timeinfo = localtime(&rawtime);
+	printf("Program ended at: %s", asctime (timeinfo));
+	printf("CPU time: %lf\n", time_spent);
 	return 0;
 }
 
@@ -118,10 +122,8 @@ void printHelp(char *name) {
 	printf("\t<max> : An integer value greater than or equals to <min>.\n\t\t<max> represents the maximum length of the password\n");
 }
 
-/*
-returns 1 when non-numeric character is detected
-returns 0 when all characters are numeric
-*/
+/* returns 1 when non-numeric character is detected
+returns 0 when all characters are numeric */
 int isNotValid(char *arg) {
 	int i = 0;
 	while (arg[i] != '\0') {
