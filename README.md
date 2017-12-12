@@ -2,17 +2,16 @@
 
 Remember to link crypt library and openmp using `-lcrypt` and `-fopenmp` when compiling.
 
-# General To-dos
+## General To-dos
 
-* Use a header file for common functions
-* format time according to requirement
-* breakdown large functions into sub functions
+* At the beginning of each function, add in comments, to state clearly of the purpose of the function, the input parameter(s) (if any), and the return value (if any).
+* Report
+* Add screen shots of testing
 
 ## Cryptographic hash lookup generator
 ![](images/task1.png) 
 > Execution Time using 8 threads: 48s (wordlist.txt)
 
-* Improve readability
 * ~~Change default output filename to  'mytab2411.txt'~~
 * ~~Use threadsafe version of crypt (crypt_r)~~
 * ~~Add multithreading~~

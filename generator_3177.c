@@ -1,22 +1,19 @@
+/*
+Author: David Zhu (P1703177)
+Class: DISM/FT/1A/21
+*/
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
-#include <crypt.h>
 #include <stdlib.h>
 #include <time.h>
 #include <ctype.h>
+#include <crypt.h>
 #include <omp.h>
-
-struct Hash {
-	char *md5;
-	char *sha512;
-	char *plaintext;
-};
-typedef struct Hash Hash;
+#include "functions_3177.h"
 
 void printHelp(char *);
-int isNotValid(char *);
-void is_valid_file(char *);
+int isAllNumeric(char *);
 void writefile(char *, Hash *, int);
 void readfile(char *, Hash *, int, int);
 unsigned long long countLines(char *, int, int);
@@ -25,7 +22,7 @@ int main(int argc, char *argv[]) {
 	if (argc != 4) {
 		printHelp(argv[0]);
 		return 1;
-	} else if (isNotValid(argv[2]) || isNotValid(argv[3])) {
+	} else if (isAllNumeric(argv[2]) || isAllNumeric(argv[3])) {
 		printHelp(argv[0]);
 		return 1;
 	} else if (atoi(argv[2]) > atoi(argv[3]) || atoi(argv[2]) < 1) {
@@ -35,11 +32,13 @@ int main(int argc, char *argv[]) {
 	is_valid_file(argv[1]);
 
 	/* print program start time */
+	char buf[26];
 	time_t rawtime;
 	struct tm * timeinfo;
 	time (&rawtime);
 	timeinfo = localtime(&rawtime);
-	printf("Program started at: %s", asctime(timeinfo));
+	strftime(buf, 26, "%Y:%m:%d %H:%M:%S\n", timeinfo);
+	printf("Program started at %s", buf);
 	clock_t begin = clock();
 
 	int min = atoi(argv[2]);
@@ -68,50 +67,10 @@ int main(int argc, char *argv[]) {
 	/* Print program end time */
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
-	printf("Program ended at: %s", asctime (timeinfo));
+	strftime(buf, 26, "%Y:%m:%d %H:%M:%S\n", timeinfo);
+	printf("Program ended at %s", buf);
 	printf("CPU time: %lf\n", time_spent);
 	return 0;
-}
-
-void is_valid_file(char *name) {
-	FILE *fp = fopen(name, "r");
-	/* check if file exists */
-	if (fp == NULL) {
-		printf("Fatal error! %s is not found\n", name);
-		printf("Program halted. Please verify the file path and try again.\n");
-		exit(EXIT_FAILURE);
-	}
-	/* longest file path is 4096
-	from: https://unix.stackexchange.com/questions/32795/what-is-the-maximum-allowed-filename-and-folder-size-with-ecryptfs
-	vulnerable to buffer overflow here*/
-	if (strlen(name) > 4096) {
-		printf("Fatal error! File name is too long\n");
-		printf("Program halted.\n");
-		exit(EXIT_FAILURE);
-	}
-	/* 4096+strlen("/usr/bin/file ")+1 = 4111 */
-	char cmd[4111];
-	char result[255];
-	strcpy(cmd, "/usr/bin/file ");
-	strcat(cmd, name);
-	FILE *pipe = popen(cmd, "r"); // use file command to check if file is ascii text file
-	if (pipe == NULL) { // check for file extension if file command does not exist
-		if (strcasestr(name, ".txt") == NULL) {
-			printf("Program halted. Please ensure the input file is a txt file\n");
-			exit(EXIT_FAILURE);
-		}
-	}
-
-	fgets(result, sizeof(result)-1, pipe);
-	if (strstr(result, "ASCII text") == NULL) {
-		printf("Fatal error! %s is not a text file!\n", name);
-		printf("Program halted. Please use a textfile and try again.\n");
-		exit(EXIT_FAILURE);
-	}
-
-	/* close */
-	pclose(pipe);
-	fclose(fp);
 }
 
 /* Prints out help menu */
@@ -124,7 +83,7 @@ void printHelp(char *name) {
 
 /* returns 1 when non-numeric character is detected
 returns 0 when all characters are numeric */
-int isNotValid(char *arg) {
+int isAllNumeric(char *arg) {
 	int i = 0;
 	while (arg[i] != '\0') {
 		if (!(isdigit(arg[i])))	return 1;
@@ -133,6 +92,7 @@ int isNotValid(char *arg) {
 	return 0;
 }
 
+/* count number of lines with length matching the min max in file */
 unsigned long long countLines(char *name, int min, int max) {
 	FILE *fp = fopen(name, "r");
 	char * line = NULL;
@@ -149,6 +109,7 @@ unsigned long long countLines(char *name, int min, int max) {
 	return count;
 }
 
+/* writes hashes out to disk */
 void writefile(char *name, Hash *array, int len) {
 	FILE *fp = fopen(name, "w");
 	for (int i = 0; i < len; i++) {
@@ -157,6 +118,7 @@ void writefile(char *name, Hash *array, int len) {
 	fclose(fp);
 }
 
+/* read wordlist */
 void readfile(char *name, Hash *array, int min, int max) {
 	FILE *fp = fopen(name, "r");	// get file pointer
 	char * line = NULL;
