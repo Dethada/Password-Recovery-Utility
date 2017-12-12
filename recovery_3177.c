@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
     timeinfo = localtime(&rawtime);
     strftime(buf, 26, "%Y:%m:%d %H:%M:%S\n", timeinfo);
     printf("Program started at %s", buf);
-    clock_t begin = clock();
+    clock_t start = clock();
 
     unsigned long long shadowLength = countLines(argv[1]);      // get number of lines in shadow file
     unsigned long long lookupLength = countLines(argv[2]) / 2;  // get number of lines in lookup file
@@ -56,8 +56,7 @@ int main(int argc, char *argv[]) {
 
     /* search for the password */
     for (int i = 0; i < shadowLength; i++) {
-        if (user[i].username == NULL)
-            continue;
+        if (user[i].username == NULL) continue;
         user[i].password = NULL;
         if (user[i].hash[1] == '1') { // if hash is md5
             for (int j = 0; j < lookupLength; j++) {
@@ -68,7 +67,7 @@ int main(int argc, char *argv[]) {
                     }
                 }
             }
-        } else {                    // if hash is sha512
+        } else { // if hash is sha512
             for (int j = 0; j < lookupLength; j++) {
                 if (lookup[j].sha512 != NULL) {
                     if (strcmp(lookup[j].sha512, user[i].hash) == 0) {
@@ -80,8 +79,9 @@ int main(int argc, char *argv[]) {
         }
     }
     
+    /* https://stackoverflow.com/questions/5248915/execution-time-of-c-program/5249150#5249150 */
     clock_t end = clock();
-    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+    double cpuTime = (double)(end - start) / CLOCKS_PER_SEC;
 
     /* Print out results */
     for (int i = 0; i < shadowLength; i++) {
@@ -97,9 +97,10 @@ int main(int argc, char *argv[]) {
     // Print time
     time(&rawtime);
     timeinfo = localtime(&rawtime);
+    /* https://stackoverflow.com/questions/3673226/how-to-print-time-in-format-2009-08-10-181754-811/3673291#3673291 */
     strftime(buf, 26, "%Y:%m:%d %H:%M:%S\n", timeinfo);
     printf("Program ended at %s", buf);
-    printf("CPU time: %lf\n", time_spent);
+    printf("CPU time: %lf\n", cpuTime);
     return 0;
 }
 
@@ -251,7 +252,9 @@ void readShadowFile(char *name, User *array) {
         exit(EXIT_FAILURE);
     }
 
+    /* https://stackoverflow.com/questions/3501338/c-read-file-line-by-line/3501681#3501681 */
     while ((getline(&line, &len, fp)) != -1) {
+        /* https://stackoverflow.com/questions/2693776/removing-trailing-newline-character-from-fgets-input/28462221#28462221 */
         line[strcspn(line,"\n")] = 0; // strip new line
         parseShadow(line, &array[i]);
         i++;
@@ -276,7 +279,9 @@ void readLookupFile(char *name, Hash *array) {
         exit(EXIT_FAILURE);
     }
 
+    /* https://stackoverflow.com/questions/3501338/c-read-file-line-by-line/3501681#3501681 */
     while ((getline(&line, &len, fp)) != -1) {
+        /* https://stackoverflow.com/questions/2693776/removing-trailing-newline-character-from-fgets-input/28462221#28462221 */
         line[strcspn(line,"\n")] = 0; // strip new line
         current = strdup(line);
         if (count % 2 != 0) {

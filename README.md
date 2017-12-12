@@ -1,6 +1,6 @@
 # C Assignment
 
-Remember to link crypt library and openmp using `-lcrypt` and `-fopenmp` when compiling.
+Run make all to compile.
 
 ## General To-dos
 

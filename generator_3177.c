@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 	timeinfo = localtime(&rawtime);
 	strftime(buf, 26, "%Y:%m:%d %H:%M:%S\n", timeinfo);
 	printf("Program started at %s", buf);
-	clock_t begin = clock();
+	clock_t start = clock();
 
 	int min = atoi(argv[2]);
 	int max = atoi(argv[3]);
@@ -52,14 +52,16 @@ int main(int argc, char *argv[]) {
 	omp_set_num_threads(nProcessors); // set number of threads to max avaliable
 	#pragma omp parallel for
 	for (int i = 0; i < count; i++) {
+		/* https://stackoverflow.com/questions/9335777/crypt-r-example/9335810#9335810 */
 		struct crypt_data data; // storage space for crypt_r
 		data.initialized = 0;
 		hashes[i].md5 = strdup(crypt_r(hashes[i].plaintext, "$1$$", &data)); // MD5 Hash
 		hashes[i].sha512 = strdup(crypt_r(hashes[i].plaintext, "$6$$", &data)); // SHA-512 Hash
 	}
 
+	/* https://stackoverflow.com/questions/5248915/execution-time-of-c-program/5249150#5249150 */
 	clock_t end = clock();
-	double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+	double cpuTime = (double)(end - start) / CLOCKS_PER_SEC;
 
 	writefile("mytab2411.txt", hashes, count); // write hashes out to disk
 	printf("Total number of generated entries => %llu\n", count << 1);
@@ -67,9 +69,10 @@ int main(int argc, char *argv[]) {
 	/* Print program end time */
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
+	/* https://stackoverflow.com/questions/3673226/how-to-print-time-in-format-2009-08-10-181754-811/3673291#3673291 */
 	strftime(buf, 26, "%Y:%m:%d %H:%M:%S\n", timeinfo);
 	printf("Program ended at %s", buf);
-	printf("CPU time: %lf\n", time_spent);
+	printf("CPU time: %lf\n", cpuTime);
 	return 0;
 }
 
@@ -99,7 +102,9 @@ unsigned long long countLines(char *name, int min, int max) {
 	size_t len = 0;
 	unsigned long long count = 0;
 
+	/* https://stackoverflow.com/questions/3501338/c-read-file-line-by-line/3501681#3501681 */
 	while ((getline(&line, &len, fp)) != -1) {
+		/* https://stackoverflow.com/questions/2693776/removing-trailing-newline-character-from-fgets-input/28462221#28462221 */
 		line[strcspn(line,"\n")] = 0; // strip new line
 		int length = strlen(line);
 		if (length < min || length > max)	continue;
@@ -125,8 +130,9 @@ void readfile(char *name, Hash *array, int min, int max) {
 	size_t len = 0;
 	int i = 0;
 
-	/* store each line into the array */
+	/* https://stackoverflow.com/questions/3501338/c-read-file-line-by-line/3501681#3501681 */
 	while ((getline(&line, &len, fp)) != -1) {
+		/* https://stackoverflow.com/questions/2693776/removing-trailing-newline-character-from-fgets-input/28462221#28462221 */
 		line[strcspn(line,"\n")] = 0; // strip new line
 		int length = strlen(line);
 		if (length < min || length > max)	continue;

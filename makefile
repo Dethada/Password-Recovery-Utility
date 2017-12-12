@@ -11,3 +11,6 @@ functions.o: functions_3177.c functions_3177.h
 	$(CC) -c functions_3177.c
 
 all: generator recovery
+
+clean:
+	rm -f generator recovery functions_3177.o
