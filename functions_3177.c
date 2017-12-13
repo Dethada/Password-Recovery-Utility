@@ -8,6 +8,8 @@ Class: DISM/FT/1A/21
 #include <string.h>
 #include "functions_3177.h"
 
+/* takes in a file name as arg
+exits the program if file name is invalid */
 void is_valid_file(char *name) {
 	FILE *fp = fopen(name, "r");
 	/* check if file exists */

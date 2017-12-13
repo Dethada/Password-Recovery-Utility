@@ -104,7 +104,8 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-/* checks format for lookup table entry */
+/* takes lookup table entry as arg
+return 0 if valid, 1 if invalid */
 int pwFormatCheck(char *string) {
     /* check number of ':' */
     int i = 0, count1 = 0, count2 = 0;
@@ -133,7 +134,8 @@ int pwFormatCheck(char *string) {
     return 0;
 }
 
-/* checks format for shadow entry */
+/* takes shadow entry as arg 
+return 0 if valid, 1 if invalid */
 int shadowFormatCheck(char *string) {
     /* check number of ':' */
     int i = 0, count1 = 0, count2 = 0;
@@ -187,7 +189,8 @@ int shadowFormatCheck(char *string) {
     return 0;
 }
 
-/* store hashes into Hash struct */
+/* takes in md5 hash, sha512 hash and Hash struct as arg
+stores md5 hash, sha512 hash and plaintext into the hash struct */
 void parsePasswd(char *md5, char *sha512, Hash *lookup) {
     char *token;
     lookup->plaintext = NULL;
@@ -210,7 +213,9 @@ void parsePasswd(char *md5, char *sha512, Hash *lookup) {
     }
 }
 
-/* gets username and hash from shadow entry */
+/* takes in shadow entry and User struct 
+parse shadow entry into user name and hash
+and stores them into User struct */
 void parseShadow(char *string, User *user) {
     if (shadowFormatCheck(string) == 1) {
         user->username = NULL;
@@ -224,7 +229,8 @@ void parseShadow(char *string, User *user) {
     user->hash = strdup(token);
 }
 
-/* returns number of lines in a file */ 
+/* takes in filename as arg 
+returns number of lines in a file */ 
 unsigned long long countLines(char *name) { 
     FILE *fp = fopen(name, "r"); 
     char * line = NULL; 
@@ -238,7 +244,8 @@ unsigned long long countLines(char *name) {
     return count; 
 }
 
-/* Read and parse the shadowfile */
+/* Read and parse the shadowfile 
+takes in filename and array of User struct as arg*/
 void readShadowFile(char *name, User *array) {
     FILE *fp = fopen(name, "r");    // get file pointer
     char *line = NULL;
@@ -264,7 +271,8 @@ void readShadowFile(char *name, User *array) {
     fclose(fp); // close file
 }
 
-/* Read and parse the lookup file */
+/* Read and parse the lookup file 
+takes in filename and array of Hash struct as arg*/
 void readLookupFile(char *name, Hash *array) {
     FILE *fp = fopen(name, "r");    // get file pointer
     char * line = NULL;

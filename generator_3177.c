@@ -76,7 +76,8 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-/* Prints out help menu */
+/* Prints out help menu 
+takes program name as arg*/
 void printHelp(char *name) {
 	printf("Usage: %s <wordlist> <min> <max>\n\n", name);
 	printf("\t<wordlist> : A file path/name in which contains the password dictonary\n");
@@ -84,7 +85,8 @@ void printHelp(char *name) {
 	printf("\t<max> : An integer value greater than or equals to <min>.\n\t\t<max> represents the maximum length of the password\n");
 }
 
-/* returns 1 when non-numeric character is detected
+/* takes an commandline arg as arg 
+returns 1 when non-numeric character is detected
 returns 0 when all characters are numeric */
 int isAllNumeric(char *arg) {
 	int i = 0;
@@ -95,7 +97,8 @@ int isAllNumeric(char *arg) {
 	return 0;
 }
 
-/* count number of lines with length matching the min max in file */
+/* takes filename, min length and max length as args 
+returns number of lines with length matching the min max in file */
 unsigned long long countLines(char *name, int min, int max) {
 	FILE *fp = fopen(name, "r");
 	char * line = NULL;
@@ -114,7 +117,8 @@ unsigned long long countLines(char *name, int min, int max) {
 	return count;
 }
 
-/* writes hashes out to disk */
+/* takes output filename, array of Hash structs and length of array as args
+writes hashes out to disk */
 void writefile(char *name, Hash *array, int len) {
 	FILE *fp = fopen(name, "w");
 	for (int i = 0; i < len; i++) {
@@ -123,7 +127,8 @@ void writefile(char *name, Hash *array, int len) {
 	fclose(fp);
 }
 
-/* read wordlist */
+/* takes filename, array of Hash structs and min and max length as args
+reads the wordlist into the array of Hash structs */
 void readfile(char *name, Hash *array, int min, int max) {
 	FILE *fp = fopen(name, "r");	// get file pointer
 	char * line = NULL;

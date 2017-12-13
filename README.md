@@ -4,7 +4,6 @@ Run make all to compile.
 
 ## General To-dos
 
-* At the beginning of each function, add in comments, to state clearly of the purpose of the function, the input parameter(s) (if any), and the return value (if any).
 * Report
 * Add screen shots of testing
 
