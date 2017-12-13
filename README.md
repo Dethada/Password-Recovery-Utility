@@ -2,13 +2,8 @@
 
 Run make all to compile.
 
-## General To-dos
-
-* Report
-* Add screen shots of testing
-
 ## Cryptographic hash lookup generator
-![](images/task1.png) 
+![](images/task1a_3177.png) 
 > Execution Time using 8 threads: 48s (wordlist.txt)
 
 * ~~Change default output filename to  'mytab2411.txt'~~
@@ -18,7 +13,7 @@ Run make all to compile.
 * ~~if system do not have file command check for txt extension~~
 
 ##  Password Recovery Utility
-![](images/task2.png) 
+![](images/task2a_3177.png) 
 > Runtime: less than 1 second
 
 * ~~Parse data into username and password~~

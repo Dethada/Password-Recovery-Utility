@@ -31,15 +31,22 @@ void is_valid_file(char *name) {
 	strcpy(cmd, "/usr/bin/file ");
 	strcat(cmd, name);
 	FILE *pipe = popen(cmd, "r"); // use file command to check if file is ascii text file
-	if (pipe == NULL) { // check for file extension if file command does not exist
+	if (pipe == NULL) { // if the command fails
 		if (strcasestr(name, ".txt") == NULL) {
 			printf("Program halted. Please ensure the input file is a txt file\n");
 			exit(EXIT_FAILURE);
 		}
+		return;
 	}
 
 	fgets(result, sizeof(result)-1, pipe);
-	if (strstr(result, "ASCII text") == NULL) {
+	if (result[0] == 0x0) {
+		printf("Please ensure you have the file command installed.\n");
+		if (strcasestr(name, ".txt") == NULL) {
+			printf("Program halted. Please ensure the input file is a txt file\n");
+			exit(EXIT_FAILURE);
+		}
+	} else if (strstr(result, "ASCII text") == NULL) {
 		printf("Fatal error! %s is not a text file!\n", name);
 		printf("Program halted. Please use a textfile and try again.\n");
 		exit(EXIT_FAILURE);
