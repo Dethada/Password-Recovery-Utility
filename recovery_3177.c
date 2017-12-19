@@ -19,9 +19,9 @@ typedef struct User User;
 int pwFormatCheck(char *);
 int shadowFormatCheck(char *);
 void parseShadow(char *, User *);
-void readShadowFile(char *, User *);
-void readLookupFile(char *, Hash *);
-unsigned long long countLines(char *);
+void readShadowFile(FILE *, User *);
+void readLookupFile(FILE *, Hash *);
+unsigned long long countLines(FILE *);
 void parsePasswd(char *, char *, Hash *);
 
 /*  argv[1] is shadow file
@@ -31,8 +31,8 @@ int main(int argc, char *argv[]) {
         printf("Usage: %s <shadowfile> <lookup>\n", argv[0]);
         return 1;
     }
-    is_valid_file(argv[1]);
-    is_valid_file(argv[2]);
+    FILE *shadowFP = is_valid_file(argv[1]); // get shadow file pointer
+    FILE *lookupFP = is_valid_file(argv[2]); // get lookup file pointer
     char buf[26];
     time_t rawtime;
     struct tm * timeinfo;
@@ -43,16 +43,16 @@ int main(int argc, char *argv[]) {
     printf("Program started at %s", buf);
     clock_t start = clock();
 
-    unsigned long long shadowLength = countLines(argv[1]);      // get number of lines in shadow file
-    unsigned long long lookupLength = countLines(argv[2]) / 2;  // get number of lines in lookup file
+    unsigned long long shadowLength = countLines(shadowFP);      // get number of lines in shadow file
+    unsigned long long lookupLength = countLines(lookupFP) / 2;  // get number of lines in lookup file
 
     Hash lookup[lookupLength];      // create lookup array
     User user[shadowLength];        // create user array
 
     printf("shadow entries: %llu\nlookup entries: %llu\n", shadowLength, lookupLength);
 
-    readShadowFile(argv[1], user);  // read shadow file into memory
-    readLookupFile(argv[2], lookup);// read lookup file into memory
+    readShadowFile(shadowFP, user);  // read shadow file into memory
+    readLookupFile(lookupFP, lookup);// read lookup file into memory
 
     /* search for the password */
     for (int i = 0; i < shadowLength; i++) {
@@ -101,6 +101,8 @@ int main(int argc, char *argv[]) {
     strftime(buf, 26, "%Y:%m:%d %H:%M:%S\n", timeinfo);
     printf("Program ended at %s", buf);
     printf("CPU time: %lf\n", cpuTime);
+    fclose(shadowFP);
+    fclose(lookupFP);
     return 0;
 }
 
@@ -229,10 +231,10 @@ void parseShadow(char *string, User *user) {
     user->hash = strdup(token);
 }
 
-/* takes in filename as arg 
+/* takes in file pointer as arg 
 returns number of lines in a file */ 
-unsigned long long countLines(char *name) { 
-    FILE *fp = fopen(name, "r"); 
+unsigned long long countLines(FILE *fp) { 
+    rewind(fp);
     char * line = NULL; 
     size_t len = 0; 
     unsigned long long count = 0; 
@@ -245,19 +247,12 @@ unsigned long long countLines(char *name) {
 }
 
 /* Read and parse the shadowfile 
-takes in filename and array of User struct as arg*/
-void readShadowFile(char *name, User *array) {
-    FILE *fp = fopen(name, "r");    // get file pointer
+takes in file pointer and array of User struct as arg*/
+void readShadowFile(FILE *fp, User *array) {
+    rewind(fp);
     char *line = NULL;
     size_t len = 0;
     unsigned long long i = 0;
-
-    // check if file exists
-    if (fp == NULL) {
-        printf("Fatal error! %s is not found\n", name);
-        printf("Program halted. Please verify the file path and try again.\n");
-        exit(EXIT_FAILURE);
-    }
 
     /* https://stackoverflow.com/questions/3501338/c-read-file-line-by-line/3501681#3501681 */
     while ((getline(&line, &len, fp)) != -1) {
@@ -268,24 +263,16 @@ void readShadowFile(char *name, User *array) {
     }
 
     free(line);
-    fclose(fp); // close file
 }
 
 /* Read and parse the lookup file 
-takes in filename and array of Hash struct as arg*/
-void readLookupFile(char *name, Hash *array) {
-    FILE *fp = fopen(name, "r");    // get file pointer
+takes in file pointer and array of Hash struct as arg*/
+void readLookupFile(FILE *fp, Hash *array) {
+    rewind(fp);
     char * line = NULL;
     size_t len = 0;
     unsigned long long i = 0, count = 0;
     char *prev, *current;
-
-    // check if file exists
-    if (fp == NULL) {
-        printf("Fatal error! %s is not found\n", name);
-        printf("Program halted. Please verify the file path and try again.\n");
-        exit(EXIT_FAILURE);
-    }
 
     /* https://stackoverflow.com/questions/3501338/c-read-file-line-by-line/3501681#3501681 */
     while ((getline(&line, &len, fp)) != -1) {
@@ -301,5 +288,4 @@ void readLookupFile(char *name, Hash *array) {
     }
 
     free(line);
-    fclose(fp); // close file
 }

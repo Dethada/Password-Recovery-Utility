@@ -15,8 +15,8 @@ Class: DISM/FT/1A/21
 void printHelp(char *);
 int isAllNumeric(char *);
 void writefile(char *, Hash *, int);
-void readfile(char *, Hash *, int, int);
-unsigned long long countLines(char *, int, int);
+void readfile(FILE *, Hash *, int, int);
+unsigned long long countLines(FILE *, int, int);
 
 int main(int argc, char *argv[]) {
 	if (argc != 4) {
@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
 		printHelp(argv[0]);
 		return 1;
 	}
-	is_valid_file(argv[1]);
+	FILE *fp = is_valid_file(argv[1]);
 
 	/* print program start time */
 	char buf[26];
@@ -43,9 +43,9 @@ int main(int argc, char *argv[]) {
 
 	int min = atoi(argv[2]);
 	int max = atoi(argv[3]);
-	unsigned long long count = countLines(argv[1], min, max); // get number of lines
+	unsigned long long count = countLines(fp, min, max); // get number of lines
 	Hash hashes[count];
-	readfile(argv[1], hashes, min, max);
+	readfile(fp, hashes, min, max);
 	printf("Total number of words processed => %llu\n", count);
 
 	int nProcessors = omp_get_max_threads(); // get number of threads avaliable
@@ -73,6 +73,7 @@ int main(int argc, char *argv[]) {
 	strftime(buf, 26, "%Y:%m:%d %H:%M:%S\n", timeinfo);
 	printf("Program ended at %s", buf);
 	printf("CPU time: %lf\n", cpuTime);
+	fclose(fp);
 	return 0;
 }
 
@@ -97,10 +98,10 @@ int isAllNumeric(char *arg) {
 	return 0;
 }
 
-/* takes filename, min length and max length as args 
+/* takes file pointer, min length and max length as args 
 returns number of lines with length matching the min max in file */
-unsigned long long countLines(char *name, int min, int max) {
-	FILE *fp = fopen(name, "r");
+unsigned long long countLines(FILE *fp, int min, int max) {
+	rewind(fp);
 	char * line = NULL;
 	size_t len = 0;
 	unsigned long long count = 0;
@@ -117,7 +118,7 @@ unsigned long long countLines(char *name, int min, int max) {
 	return count;
 }
 
-/* takes output filename, array of Hash structs and length of array as args
+/* takes output file name, array of Hash structs and length of array as args
 writes hashes out to disk */
 void writefile(char *name, Hash *array, int len) {
 	FILE *fp = fopen(name, "w");
@@ -127,10 +128,10 @@ void writefile(char *name, Hash *array, int len) {
 	fclose(fp);
 }
 
-/* takes filename, array of Hash structs and min and max length as args
+/* takes file pointer, array of Hash structs and min and max length as args
 reads the wordlist into the array of Hash structs */
-void readfile(char *name, Hash *array, int min, int max) {
-	FILE *fp = fopen(name, "r");	// get file pointer
+void readfile(FILE *fp, Hash *array, int min, int max) {
+	rewind(fp);	// get file pointer
 	char * line = NULL;
 	size_t len = 0;
 	int i = 0;
@@ -146,5 +147,4 @@ void readfile(char *name, Hash *array, int min, int max) {
 	}
 
 	free(line); // free memory
-	fclose(fp); // close file
 }
